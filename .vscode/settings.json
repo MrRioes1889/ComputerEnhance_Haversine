@@ -1,0 +1,8 @@
+{
+    "cmake.debugConfig": {
+        "buildBeforeRun": true,
+        "type": "cppvsdbg",
+        "console": "externalTerminal"
+    }
+  }
+}

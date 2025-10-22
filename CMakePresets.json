@@ -1,0 +1,61 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "name": "Debug MingW",
+            "hidden": false,
+            "generator": "MinGW Makefiles",
+            "binaryDir": "${workspaceFolder}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "Release MingW",
+            "hidden": false,
+            "generator": "MinGW Makefiles",
+            "binaryDir": "${workspaceFolder}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "RelWithDebInfo MingW",
+            "hidden": false,
+            "generator": "MinGW Makefiles",
+            "binaryDir": "${workspaceFolder}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "DefaultMulti",
+            "hidden": false,
+            "generator": "Visual Studio 17 2022",
+            "binaryDir": "${workspaceFolder}/build"
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "Debug",
+            "description": "Debug without optimizations",
+            "displayName": "Debug",
+            "configuration": "Debug",
+            "configurePreset": "DefaultMulti"
+        },
+        {
+            "name": "ODebug",
+            "description": "Debug with optimizations",
+            "displayName": "ODebug",
+            "configuration": "ODebug",
+            "configurePreset": "DefaultMulti"
+        },
+        {
+            "name": "Release",
+            "description": "Release with optimizations",
+            "displayName": "Release",
+            "configuration": "Release",
+            "configurePreset": "DefaultMulti"
+        }
+    ]
+}
