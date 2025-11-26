@@ -1,7 +1,9 @@
 #include "haversine_generator.h"
-#include "platform/platform.h"
+#include "platform/shm_platform.h"
 #include "utility/shm_string.h"
+#include "haversine.h"
 #include <stdio.h>
+#include <malloc.h>
 
 static uint32 _rand_seed = 0;
 static uint32 _pcg_hash()
@@ -39,28 +41,49 @@ static float64 _generate_random_y()
     return ret;
 }
 
-void generate_haversine_test_json(const char* output_filepath, uint32 coord_pair_count, uint32 seed)
+void generate_haversine_test_json(const char* json_filepath, const char* results_filepath, uint32 coord_pair_count, uint32 seed)
 {
-    SHM_FileHandle file = platform_file_create(output_filepath, true);
+    SHM_FileHandle file = shm_platform_file_create(json_filepath, true);
 
     _rand_seed = seed;
     char json_start[] = "{\n\t\"pairs\": [\n";
-    platform_file_append(file, json_start, array_count(json_start) - 1);
+    shm_platform_file_append(file, json_start, array_count(json_start) - 1);
+    float64 haversine_sum = 0.0;
+    uint64 haversine_results_size = sizeof(uint64) + (sizeof(float64) * (coord_pair_count + 1));
+    float64* haversine_results = malloc(haversine_results_size);
+    *((uint64*)haversine_results) = coord_pair_count;
 
-    char line_buf[256] = {0};
+    float64 earth_radius = 6372.8;
+    SHM_String lines_s = {0};
+    shm_string_init(128 * coord_pair_count, &lines_s);
     for (uint32 i = 0; i < coord_pair_count; i++)
     {
         bool8 last_pair = i == (coord_pair_count - 1);
-        float64 x0 = _generate_random_x();
-        float64 y0 = _generate_random_y();
-        float64 x1 = _generate_random_x();
-        float64 y1 = _generate_random_y();
-        sprintf_s(line_buf, 256, "\t\t{\"x0\":%.16lf, \"y0\":%.16lf, \"x1\":%.16lf, \"y1\":%.16lf}%s\n", x0, y0, x1, y1, last_pair ? "" : ",");
-        platform_file_append(file, line_buf, cstring_length(line_buf));
+        HaversinePair coords = {0};
+        coords.x0 = _generate_random_x();
+        coords.y0 = _generate_random_y();
+        coords.x1 = _generate_random_x();
+        coords.y1 = _generate_random_y();
+        int line_length = sprintf_s(&lines_s.buffer[lines_s.length], 256, "\t\t{\"x0\":%.16lf, \"y0\":%.16lf, \"x1\":%.16lf, \"y1\":%.16lf}%s\n",
+             coords.x0, coords.y0, coords.x1, coords.y1, last_pair ? "" : ",");
+        lines_s.length += line_length;
+        
+        float64 haversine_res = haversine_reference(coords, earth_radius);
+        haversine_results[i+1] = haversine_res;
+        haversine_sum += haversine_res;
     }
 
+    shm_platform_file_append(file, lines_s.buffer, lines_s.length);
     char json_end[] = "\t]\n}";
-    platform_file_append(file, json_end, array_count(json_end) - 1);
+    shm_platform_file_append(file, json_end, array_count(json_end) - 1);
 
-    platform_file_close(&file);
+    float64 haversine_average = haversine_sum / coord_pair_count;
+    haversine_results[coord_pair_count+1] = haversine_average;
+    printf_s("Expected haversine average: %.5lf\n", haversine_average);
+
+    shm_platform_file_close(&file);
+
+    SHM_FileHandle results_file = shm_platform_file_create(results_filepath, true);
+    shm_platform_file_append(results_file, haversine_results, haversine_results_size);
+    shm_platform_file_close(&results_file);
 }
