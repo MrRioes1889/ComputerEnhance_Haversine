@@ -1,6 +1,7 @@
 #ifdef _WIN32
 
 #include "shm_platform.h"
+#include "shm_intrin.h"
 #include "utility/shm_string.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -15,7 +16,69 @@ bool8 shm_platform_context_init(SHM_PlatformContext* out_context)
     int32 split_i = shm_cstring_last_index_of(exec_filepath, '\\');
     shm_cstring_copy_n(out_context->executable_dir, array_count(out_context->executable_dir), exec_filepath, (uint32)split_i);
     shm_cstring_copy(out_context->executable_name, array_count(out_context->executable_name), &exec_filepath[split_i+1]);
+
     return true;
+}
+
+uint64 shm_platform_get_os_time_counter_frequency()
+{
+    LARGE_INTEGER qpf;
+    QueryPerformanceFrequency(&qpf);
+    return qpf.QuadPart;
+}
+
+uint64 shm_platform_get_os_time_counter()
+{
+    LARGE_INTEGER qpc;
+    QueryPerformanceCounter(&qpc);
+    return qpc.QuadPart;
+}
+
+uint64 shm_platform_get_rdtsc_frequency(uint64 calibration_ms)
+{
+    if (!calibration_ms)
+        calibration_ms = 1000;
+    uint64 os_freq = shm_platform_get_os_time_counter_frequency();
+
+    uint64 rdtsc_start = __rdtsc();
+	uint64 os_start = shm_platform_get_os_time_counter();
+	uint64 os_end = 0;
+	uint64 os_elapsed = 0;
+    uint64 os_wait = os_freq * calibration_ms / 1000;
+	while(os_elapsed < os_wait)
+	{
+		os_end = shm_platform_get_os_time_counter();
+		os_elapsed = os_end - os_start;
+	}
+
+    uint64 rdtsc_end = __rdtsc();
+    uint64 rdtsc_elapsed = rdtsc_end - rdtsc_start;
+    uint64 rdtsc_freq = os_freq * rdtsc_elapsed / os_elapsed;
+	
+    return rdtsc_freq;
+}
+
+void shm_platform_sleep_until_key_pressed()
+{
+    HANDLE handle = GetStdHandle(STD_INPUT_HANDLE);
+    if (handle == INVALID_HANDLE_VALUE)
+        return;
+
+    DWORD count = 0;
+    INPUT_RECORD input_record;
+
+    for (;;)
+    {
+        DWORD wait = WaitForSingleObject(handle, INFINITE);
+        if (wait != WAIT_OBJECT_0)
+            return;
+
+        if (!ReadConsoleInput(handle, &input_record, 1, &count))
+            return;
+
+        if (input_record.EventType == KEY_EVENT && input_record.Event.KeyEvent.bKeyDown)
+            return;
+    }
 }
 
 bool8 shm_platform_console_window_open()
