@@ -24,6 +24,7 @@ SHM_JsonNodeId shm_json_get_child_id_by_key(const SHM_JsonData* data, SHM_JsonNo
 SHM_JsonNodeId shm_json_get_child_id_by_index(const SHM_JsonData* data, SHM_JsonNodeId parent_id, uint32 index);
 SHM_JsonNodeId shm_json_get_first_child_id(const SHM_JsonData* data, SHM_JsonNodeId parent_id);
 SHM_JsonNodeId shm_json_get_next_child_id(const SHM_JsonData* data, SHM_JsonNodeId sibling_id);
+uint32 shm_json_get_child_count(const SHM_JsonData* data, SHM_JsonNodeId node_id);
 
 bool8 shm_json_get_float_value(const SHM_JsonData* data, SHM_JsonNodeId node_id, float64* out_value);
 bool8 shm_json_get_int_value(const SHM_JsonData* data, SHM_JsonNodeId node_id, int64* out_value);

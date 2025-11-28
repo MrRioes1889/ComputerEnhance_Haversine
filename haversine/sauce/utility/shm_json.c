@@ -641,6 +641,20 @@ SHM_JsonNodeId shm_json_get_next_child_id(const SHM_JsonData* data, SHM_JsonNode
     return node_buffer[sibling_id].next_node_id;
 }
 
+uint32 shm_json_get_child_count(const SHM_JsonData* data, SHM_JsonNodeId node_id)
+{
+    if (node_id > data->node_count - 1)
+        return 0;
+
+    JsonNode* node_buffer = data->node_buffer;
+    JsonNode node = node_buffer[node_id];
+
+    if (node.node_type != JsonNodeType_Object && node.node_type != JsonNodeType_Array)
+        return 0;
+
+    return node.child_count;
+}
+
 bool8 shm_json_get_float_value(const SHM_JsonData* data, SHM_JsonNodeId node_id, float64* out_value)
 {
     if (node_id > data->node_count - 1)
