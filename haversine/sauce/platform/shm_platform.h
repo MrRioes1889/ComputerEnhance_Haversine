@@ -20,9 +20,9 @@ bool8 shm_platform_context_init(SHM_PlatformContext* out_context);
 bool8 shm_platform_console_window_open();
 bool8 shm_platform_console_window_close();
 
-uint64 shm_platform_get_os_time_counter_frequency();
-uint64 shm_platform_get_os_time_counter();
-uint64 shm_platform_get_rdtsc_frequency(uint64 calibration_ms);
+uint64 shm_platform_get_os_timer_frequency();
+uint64 shm_platform_get_os_timer_count();
+uint64 shm_platform_get_cpu_timer_frequency(uint64 calibration_ms);
 
 void shm_platform_sleep_until_key_pressed();
 

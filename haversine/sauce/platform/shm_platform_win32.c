@@ -20,34 +20,34 @@ bool8 shm_platform_context_init(SHM_PlatformContext* out_context)
     return true;
 }
 
-uint64 shm_platform_get_os_time_counter_frequency()
+uint64 shm_platform_get_os_timer_frequency()
 {
     LARGE_INTEGER qpf;
     QueryPerformanceFrequency(&qpf);
     return qpf.QuadPart;
 }
 
-uint64 shm_platform_get_os_time_counter()
+uint64 shm_platform_get_os_timer_count()
 {
     LARGE_INTEGER qpc;
     QueryPerformanceCounter(&qpc);
     return qpc.QuadPart;
 }
 
-uint64 shm_platform_get_rdtsc_frequency(uint64 calibration_ms)
+uint64 shm_platform_get_cpu_timer_frequency(uint64 calibration_ms)
 {
     if (!calibration_ms)
         calibration_ms = 1000;
-    uint64 os_freq = shm_platform_get_os_time_counter_frequency();
+    uint64 os_freq = shm_platform_get_os_timer_frequency();
 
     uint64 rdtsc_start = __rdtsc();
-	uint64 os_start = shm_platform_get_os_time_counter();
+	uint64 os_start = shm_platform_get_os_timer_count();
 	uint64 os_end = 0;
 	uint64 os_elapsed = 0;
     uint64 os_wait = os_freq * calibration_ms / 1000;
 	while(os_elapsed < os_wait)
 	{
-		os_end = shm_platform_get_os_time_counter();
+		os_end = shm_platform_get_os_timer_count();
 		os_elapsed = os_end - os_start;
 	}
 
