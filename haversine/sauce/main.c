@@ -62,16 +62,16 @@ int main(int argc, char** argv)
 	#if 0
 	generate_haversine_test_json(json_path, results_path, pair_count, 0xFFFFFAAA);
 	#elif 1
-	SHM_TIMER_START(start, "Start");
 	uint64 filesize = shm_platform_get_filesize(json_path);
+	SHM_TIMER_START_DATA(read_file, "Read File", filesize);
 	char* json_s = malloc(filesize+1);
 	SHM_FileHandle file = shm_platform_file_open(json_path);
 	shm_platform_file_read(file, json_s, (uint32)filesize);
 	json_s[filesize] = 0;
 	shm_platform_file_close(&file);
-	SHM_TIMER_STOP(start);
+	SHM_TIMER_STOP(read_file);
 
-	SHM_TIMER_START(parse_json, "Parse Json");
+	SHM_TIMER_START_DATA(parse_json, "Parse Json", filesize);
 	SHM_JsonData json_data = {0};
 	if (!shm_json_parse_text(json_s, pair_count * 5 + 1, &json_data))
 	{
@@ -80,9 +80,9 @@ int main(int argc, char** argv)
 	}
 	free(json_s);
 
-	SHM_TIMER_START(read_pairs, "Read json pairs");
 	SHM_JsonNodeId pairs_arr_id = shm_json_get_child_id_by_key(&json_data, 0, "pairs");
 	pair_count = shm_json_get_child_count(&json_data, pairs_arr_id);
+	SHM_TIMER_START_DATA(read_pairs, "Read json pairs", sizeof(HaversinePair) * pair_count);
 	HaversinePair* pairs = malloc(sizeof(HaversinePair) * pair_count);
 	SHM_JsonNodeId pair_id = shm_json_get_first_child_id(&json_data, pairs_arr_id);
 	for (uint32 i = 0; i < pair_count; i++)
@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 	SHM_TIMER_STOP(read_pairs);
 	shm_json_data_destroy(&json_data);
 	SHM_TIMER_STOP(parse_json);
-	SHM_TIMER_START(haversine_calc, "Haversine calculation");
+	SHM_TIMER_START_DATA(haversine_calc, "Haversine calculation", sizeof(HaversinePair) * pair_count);
 	float64 haversine_avg = 0.0;
     float64 earth_radius = 6372.8;
 	for (uint32 i = 0; i < pair_count; i++)
