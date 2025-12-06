@@ -5,6 +5,7 @@
 #include "utility/shm_string.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <timeapi.h>
 #include <stdio.h>
 
 bool8 shm_platform_context_init(SHM_PlatformContext* out_context)
@@ -17,7 +18,15 @@ bool8 shm_platform_context_init(SHM_PlatformContext* out_context)
     shm_cstring_copy_n(out_context->executable_dir, array_count(out_context->executable_dir), exec_filepath, (uint32)split_i);
     shm_cstring_copy(out_context->executable_name, array_count(out_context->executable_name), &exec_filepath[split_i+1]);
 
+    timeBeginPeriod(1);
+    out_context->sleep_timer_handle = CreateWaitableTimer(NULL, TRUE, NULL);
+
     return true;
+}
+
+void shm_platform_context_destroy(SHM_PlatformContext* context)
+{
+    CloseHandle(context->sleep_timer_handle);
 }
 
 uint64 shm_platform_get_os_timer_frequency()
@@ -56,6 +65,21 @@ uint64 shm_platform_get_cpu_timer_frequency(uint64 calibration_ms)
     uint64 rdtsc_freq = os_freq * rdtsc_elapsed / os_elapsed;
 	
     return rdtsc_freq;
+}
+
+void shm_platform_sleep_ms(uint32 sleep_ms)
+{
+    Sleep(sleep_ms);
+    /*
+    HANDLE timer = plaform_context->sleep_timer_handle;
+    LARGE_INTEGER inverted_wait_time;
+    inverted_wait_time.QuadPart = -sleep_ns;
+    if (!SetWaitableTimer(timer, &inverted_wait_time, 0, NULL, NULL, FALSE))
+        return false;
+
+    WaitForSingleObject(timer, INFINITE);
+    return true;
+    */
 }
 
 void shm_platform_sleep_until_key_pressed()

@@ -57,12 +57,10 @@ file(GLOB_RECURSE HEADER_FILES "${SOURCE_DIR}/*.h")
 
 set(BIN_DIR "${CMAKE_SOURCE_DIR}/bin${BUILD_TYPE_SUBDIR}")
 
-# Set output directories
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BIN_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BIN_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BIN_DIR}")
 
-# Create executable from all .c files
 add_executable(${APP_NAME} ${SRC_FILES} ${HEADER_FILES})
 
 set_target_properties(
@@ -80,6 +78,12 @@ target_include_directories(
     PRIVATE
         ${SOURCE_DIR}
 )
+
+target_link_libraries(
+    ${APP_NAME}
+    PUBLIC winmm 
+)
+
 
 # Make Visual Studio solution a tad less obnoxious
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${APP_NAME})
