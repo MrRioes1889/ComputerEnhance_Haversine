@@ -7,46 +7,6 @@
 #include <stdio.h>
 #include <malloc.h>
 
-void fun_a(bool8 full_run, bool8 call_b);
-
-void fun_b(bool8 full_run)
-{
-	SHM_TIMER_START_FUNC(fun_b);
-	if (full_run)
-	{
-		shm_platform_sleep_ms(100);
-		fun_a(false, false);
-		shm_platform_sleep_ms(100);
-		fun_a(false, false);
-		shm_platform_sleep_ms(100);
-		fun_a(true, false);
-	}
-	else
-	{
-		shm_platform_sleep_ms(200);
-	}
-	SHM_TIMER_STOP(fun_b);
-	return;
-}
-
-void fun_a(bool8 full_run, bool8 call_b)
-{
-	SHM_TIMER_START_FUNC(fun_a);
-	shm_platform_sleep_ms(100);
-	if (!full_run)
-	{
-		if (call_b) fun_b(false);
-		SHM_TIMER_STOP(fun_a);
-		return;
-	}
-
-	if (call_b) fun_b(true);
-	shm_platform_sleep_ms(100);
-	fun_a(false, false);
-	SHM_TIMER_STOP(fun_a);
-	return;
-}
-
 int main(int argc, char** argv)
 {
 	SHM_PlatformContext plat_context = {0};
