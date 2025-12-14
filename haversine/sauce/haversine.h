@@ -9,4 +9,5 @@ typedef struct
 HaversinePair;
 
 float64 haversine_reference(HaversinePair coords, float64 radius);
+bool8 haversine_calculate_average_from_json(const char* json_path, const char* results_cmp_path, uint32 expected_pair_count);
 

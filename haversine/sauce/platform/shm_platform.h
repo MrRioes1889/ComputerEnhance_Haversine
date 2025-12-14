@@ -3,24 +3,18 @@
 
 typedef struct
 {
-    void* proc_handle;
-    char executable_dir[256];
-    char executable_name[64];
-    void* sleep_timer_handle;
-}
-SHM_PlatformContext;
-
-typedef struct
-{
     void* handle;
 }
 SHM_FileHandle;
 
-bool8 shm_platform_context_init(SHM_PlatformContext* out_context);
-void shm_platform_context_destroy(SHM_PlatformContext* context);
+bool8 shm_platform_context_init();
+bool8 shm_platform_context_init_additional_metrics();
+void shm_platform_context_destroy();
 
 bool8 shm_platform_console_window_open();
 bool8 shm_platform_console_window_close();
+
+uint64 shm_platform_metrics_get_page_fault_count();
 
 uint64 shm_platform_get_os_timer_frequency();
 uint64 shm_platform_get_os_timer_count();
@@ -29,7 +23,7 @@ uint64 shm_platform_get_cpu_timer_frequency(uint64 calibration_ms);
 void shm_platform_sleep_ms(uint32 sleep_ms);
 void shm_platform_sleep_until_key_pressed();
 
-int64 shm_platform_get_filesize(const char* filepath);
+uint64 shm_platform_get_filesize(const char* filepath);
 SHM_FileHandle shm_platform_file_create(const char* filepath, bool8 overwrite);
 SHM_FileHandle shm_platform_file_open(const char* filepath);
 void shm_platform_file_close(SHM_FileHandle* file);

@@ -82,7 +82,7 @@ bool8 shm_string_init(uint64 length, SHM_String* out_string)
     if(!length)
         return false;
     
-    out_string->buffer_size = max(SHM_STRING_MIN_SIZE, length + 1);
+    out_string->buffer_size = MAX(SHM_STRING_MIN_SIZE, length + 1);
     out_string->buffer = SHM_STRING_ALLOC(out_string->buffer_size);
     memset(out_string->buffer, 0, out_string->buffer_size);
     out_string->length = 0;

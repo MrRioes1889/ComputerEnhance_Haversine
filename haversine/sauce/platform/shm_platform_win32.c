@@ -5,28 +5,50 @@
 #include "utility/shm_string.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <psapi.h>
 #include <timeapi.h>
 #include <stdio.h>
 
-bool8 shm_platform_context_init(SHM_PlatformContext* out_context)
+typedef struct
 {
-    out_context->proc_handle = GetModuleHandle(0);
+    HANDLE proc_handle;
+    char executable_dir[256];
+    char executable_name[64];
+
+    bool8 additional_metrics_initialized;
+    HANDLE proc_status_handle;
+}
+Context;
+
+static Context _context = {0};
+
+bool8 shm_platform_context_init()
+{
+    _context.proc_handle = GetModuleHandle(0);
 
     char exec_filepath[PATH_MAX] = {0};
-    uint32 filepath_length = GetModuleFileNameA((HMODULE)out_context->proc_handle, exec_filepath, array_count(exec_filepath));
+    uint32 filepath_length = GetModuleFileNameA((HMODULE)_context.proc_handle, exec_filepath, array_count(exec_filepath));
     int32 split_i = shm_cstring_last_index_of(exec_filepath, '\\');
-    shm_cstring_copy_n(out_context->executable_dir, array_count(out_context->executable_dir), exec_filepath, (uint32)split_i);
-    shm_cstring_copy(out_context->executable_name, array_count(out_context->executable_name), &exec_filepath[split_i+1]);
+    shm_cstring_copy_n(_context.executable_dir, array_count(_context.executable_dir), exec_filepath, (uint32)split_i);
+    shm_cstring_copy(_context.executable_name, array_count(_context.executable_name), &exec_filepath[split_i+1]);
 
     timeBeginPeriod(1);
-    out_context->sleep_timer_handle = CreateWaitableTimer(NULL, TRUE, NULL);
 
     return true;
 }
 
-void shm_platform_context_destroy(SHM_PlatformContext* context)
+bool8 shm_platform_context_init_additional_metrics()
 {
-    CloseHandle(context->sleep_timer_handle);
+    if (_context.additional_metrics_initialized)
+        return true;
+
+    _context.proc_status_handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, GetCurrentProcessId());
+    _context.additional_metrics_initialized = true;
+    return true;
+}
+
+void shm_platform_context_destroy()
+{
 }
 
 uint64 shm_platform_get_os_timer_frequency()
@@ -128,7 +150,15 @@ bool8 shm_platform_console_window_close()
     return true;
 }
 
-int64 shm_platform_get_filesize(const char* filepath)
+uint64 shm_platform_metrics_get_page_fault_count()
+{
+    PROCESS_MEMORY_COUNTERS_EX memory_counters = {.cb = sizeof(PROCESS_MEMORY_COUNTERS_EX)};
+    GetProcessMemoryInfo(_context.proc_status_handle, (PROCESS_MEMORY_COUNTERS*)&memory_counters, sizeof(memory_counters));
+
+    return memory_counters.PageFaultCount;
+}
+
+uint64 shm_platform_get_filesize(const char* filepath)
 {
     HANDLE file_handle = CreateFileA(filepath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (file_handle == INVALID_HANDLE_VALUE)
@@ -140,7 +170,7 @@ int64 shm_platform_get_filesize(const char* filepath)
     LARGE_INTEGER ret;
     ret.LowPart = low;
     ret.HighPart = high;
-    return ret.QuadPart;
+    return (uint64)ret.QuadPart;
 }
 
 SHM_FileHandle shm_platform_file_create(const char* filepath, bool8 overwrite)

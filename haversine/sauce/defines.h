@@ -29,6 +29,7 @@ typedef uint16_t Word;
 #pragma clang diagnostic ignored "-Wunused-function"
 #pragma clang diagnostic ignored "-Wformat-security"
 #define unreachable() __builtin_unreachable()
+
 #endif
 
 #ifdef DEBUG
@@ -40,5 +41,5 @@ typedef uint16_t Word;
 #define false 0
 #define true 1
 #define array_count(arr) (sizeof(arr) / sizeof(arr[0]))
-#define min(x, y) (y < x ? y : x)
-#define max(x, y) (y > x ? y : x)
+#define MIN(x, y) (y < x ? y : x)
+#define MAX(x, y) (y > x ? y : x)

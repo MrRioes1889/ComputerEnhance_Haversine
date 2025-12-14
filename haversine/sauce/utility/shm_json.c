@@ -218,7 +218,7 @@ static inline uint32 _parse_float64(const char* s, float64* out_value)
 
 bool8 shm_json_parse_text(const char* text, uint32 estimated_node_count, SHM_JsonData* out_json)
 {
-    estimated_node_count = max(estimated_node_count, 1);
+    estimated_node_count = MAX(estimated_node_count, 1);
 
     SHM_JsonData json_data = {0};
     json_data.node_buffer_size = estimated_node_count;
