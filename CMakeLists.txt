@@ -22,7 +22,8 @@ if (NOT DEFINED CMAKE_BUILD_TYPE)
             set(CMAKE_BUILD_TYPE Debug)
         endif()
     else()
-        set(CMAKE_C_FLAGS_ODEBUG "/O2 /Zi /Wall /W4 /DODEBUG /DDEBUG")
+        set(CMAKE_C_FLAGS_ODEBUG "/O2 /Zi /DODEBUG /DDEBUG")
+        set(CMAKE_EXE_LINKER_FLAGS_ODEBUG "/DEBUG /OPT:REF")
         add_compile_options(/Wall /W4)
     endif()
 
@@ -51,6 +52,8 @@ else()
 
     set(BUILD_TYPE_SUBDIR "/${CMAKE_BUILD_TYPE}")
 endif()
+
+# message("Using compiler: ${CMAKE_C_COMPILER_ID}")
 
 file(GLOB_RECURSE SRC_FILES "${SOURCE_DIR}/*.c")
 file(GLOB_RECURSE HEADER_FILES "${SOURCE_DIR}/*.h")
@@ -83,7 +86,6 @@ target_link_libraries(
     ${APP_NAME}
     PUBLIC winmm 
 )
-
 
 # Make Visual Studio solution a tad less obnoxious
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${APP_NAME})

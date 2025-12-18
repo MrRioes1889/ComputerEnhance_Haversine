@@ -54,9 +54,8 @@ void shm_profiler_dump()
         float64 self_seconds = (float64)timer->tsc_elapsed_self/(float64)_profiler.time_counter_frequency;
         float64 full_percent = (float64)timer->tsc_elapsed_full/(float64)tsc_elapsed * 100.0;
         float64 full_seconds = (float64)timer->tsc_elapsed_full/(float64)_profiler.time_counter_frequency;
-        float exclusive_p = 
         SHM_TIMER_PRINT("  %s[%u]:\n    self: %.5f ms, %llu cycles, %.2f%%\n    full: %.5f ms, %llu cycles, %.2f%%\n", 
-            timer->key, timer->call_count, self_seconds * 1000, timer->tsc_elapsed_self, self_percent, full_seconds * 1000, timer->tsc_elapsed_full, full_percent);
+            timer->key, timer->call_count, self_seconds * 1000.0, timer->tsc_elapsed_self, self_percent, full_seconds * 1000.0, timer->tsc_elapsed_full, full_percent);
 
         if (timer->byte_count_processed)
         {

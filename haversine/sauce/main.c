@@ -2,7 +2,7 @@
 #include "utility/shm_profiler.h"
 #include "haversine_generator.h"
 #include "haversine.h"
-#include "read_tests.h"
+#include "rep_tests.h"
 #include <stdio.h>
 
 int main(int argc, char** argv)
@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 	#elif 0
 	haversine_calculate_average_from_json(json_path, results_path, pair_count);
 	#elif 1
-	run_all_read_tests(json_path, rdtsc_freq);
+	run_all_tests(json_path, rdtsc_freq);
 	#endif
 
 	shm_profiler_dump();

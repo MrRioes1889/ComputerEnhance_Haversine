@@ -1,5 +1,5 @@
 #pragma once
-#include "defines.h"
+#include "shm_utils_common_defines.h"
 
 #define SHM_PROFILER_TIMERS_ENABLED 1
 #define SHM_PROFILER_MAX_TIMERS 1023
@@ -33,5 +33,7 @@ void __shm_timer_end(__SHM_Timeblock timeblock);
 #else
 #define SHM_TIMER_START_FUNC(...)
 #define SHM_TIMER_START(...)
+#define SHM_TIMER_START_FUNC_DATA(...)
+#define SHM_TIMER_START_DATA(...)
 #define SHM_TIMER_STOP(...)
 #endif

@@ -26,7 +26,7 @@ bool8 shm_platform_context_init()
 {
     _context.proc_handle = GetModuleHandle(0);
 
-    char exec_filepath[PATH_MAX] = {0};
+    char exec_filepath[MAX_PATH] = {0};
     uint32 filepath_length = GetModuleFileNameA((HMODULE)_context.proc_handle, exec_filepath, array_count(exec_filepath));
     int32 split_i = shm_cstring_last_index_of(exec_filepath, '\\');
     shm_cstring_copy_n(_context.executable_dir, array_count(_context.executable_dir), exec_filepath, (uint32)split_i);
@@ -130,7 +130,7 @@ void shm_platform_sleep_until_key_pressed()
 bool8 shm_platform_console_window_open()
 {
     FreeConsole();
-    WINBOOL res = AllocConsole();
+    BOOL res = AllocConsole();
     if (!res)
     {
         DWORD err_code = GetLastError();
@@ -138,9 +138,10 @@ bool8 shm_platform_console_window_open()
         return false;
     }
 
-    freopen64("CONOUT$", "w", stdout);
-    freopen64("CONOUT$", "w", stderr);
-    freopen64("CONIN$", "r", stdin);
+    FILE* dummy;
+    freopen_s(&dummy, "CONOUT$", "w", stdout);
+    freopen_s(&dummy, "CONOUT$", "w", stderr);
+    freopen_s(&dummy, "CONIN$", "r", stdin);
     return true;
 }
 

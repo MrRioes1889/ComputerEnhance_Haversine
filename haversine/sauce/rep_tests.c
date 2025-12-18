@@ -1,4 +1,4 @@
-#include "read_tests.h"
+#include "rep_tests.h"
 #include "utility/shm_repetition_tester.h"
 #include "platform/shm_platform.h"
 #include <malloc.h>
@@ -9,18 +9,18 @@ typedef struct
     uint64 size;
     void* data;
 }
-ReadTestBuffer;
+TestBuffer;
 
 typedef struct
 {
     const char* filename;
-    ReadTestBuffer preallocated_buffer;
+    TestBuffer preallocated_buffer;
 }
-ReadTestParams;
+TestParams;
 
-static inline ReadTestBuffer _allocate_filebuffer(const char* filename)
+static inline TestBuffer _allocate_filebuffer(const char* filename)
 {
-    ReadTestBuffer buffer = {0};
+    TestBuffer buffer = {0};
     uint64 filesize = shm_platform_get_filesize(filename);
     if (!filesize)
         return buffer;
@@ -30,7 +30,7 @@ static inline ReadTestBuffer _allocate_filebuffer(const char* filename)
     return buffer;
 }
 
-static inline void _free_filebuffer(ReadTestBuffer* buffer)
+static inline void _free_filebuffer(TestBuffer* buffer)
 {
     free(buffer->data);
     buffer->data = 0;
@@ -62,16 +62,16 @@ static void _test_fread(SHM_RepetitionTester* tester, const char* filename, void
     fclose(file);
 }
 
-static void _test_fread_preallocated(SHM_RepetitionTester* tester, void* _params)
+static void _test_fread_prealloc(SHM_RepetitionTester* tester, void* _params)
 {
-    ReadTestParams* params = (ReadTestParams*)_params;
+    TestParams* params = (TestParams*)_params;
     _test_fread(tester, params->filename, params->preallocated_buffer.data, params->preallocated_buffer.size);
 }
 
 static void _test_fread_alloc(SHM_RepetitionTester* tester, void* _params)
 {
-    ReadTestParams* params = (ReadTestParams*)_params;
-    ReadTestBuffer buffer = _allocate_filebuffer(params->filename);
+    TestParams* params = (TestParams*)_params;
+    TestBuffer buffer = _allocate_filebuffer(params->filename);
     if (!buffer.data)
     {
         shm_repetition_test_log_error(tester, "Failed to get filesize for allocation.");
@@ -82,19 +82,50 @@ static void _test_fread_alloc(SHM_RepetitionTester* tester, void* _params)
     _free_filebuffer(&buffer);
 }
 
-void run_all_read_tests(const char* filename, uint64 time_counter_frequency)
+static void _test_write_all_bytes(SHM_RepetitionTester* tester, uint8* buffer, uint64 buffer_size)
 {
-    ReadTestParams params = {0};
+    shm_repetition_test_begin_timer(tester);
+    for (uint64 i = 0; i < buffer_size; i++)
+    {
+        buffer[i] = (uint8)i;
+    }
+    shm_repetition_test_end_timer(tester);
+
+    shm_repetition_test_add_bytes_processed(tester, buffer_size);
+}
+
+static void _test_write_all_bytes_prealloc(SHM_RepetitionTester* tester, void* _params)
+{
+    TestParams* params = (TestParams*)_params;
+    _test_write_all_bytes(tester, params->preallocated_buffer.data, params->preallocated_buffer.size);
+}
+
+static void _test_write_all_bytes_alloc(SHM_RepetitionTester* tester, void* _params)
+{
+    TestParams* params = (TestParams*)_params;
+    TestBuffer buffer = _allocate_filebuffer(params->filename);
+    if (!buffer.data)
+    {
+        shm_repetition_test_log_error(tester, "Failed to get filesize for allocation.");
+        return;
+    }
+
+    _test_write_all_bytes(tester, buffer.data, buffer.size);
+    _free_filebuffer(&buffer);
+}
+
+void run_all_tests(const char* filename, uint64 time_counter_frequency)
+{
+    TestParams params = {0};
     params.filename = filename;
     params.preallocated_buffer = _allocate_filebuffer(params.filename);
     if (!params.preallocated_buffer.data)
         return;
 
-    #define test_count 2
+    #define test_count 1
     SHM_RepetitionTest tests[test_count] =
     {
-        {.func = _test_fread_preallocated, .name = "fread preallocated"},
-        {.func = _test_fread_alloc, .name = "fread + alloc"}
+        {.func = _test_write_all_bytes_prealloc, .name = "write all bytes preallocated"},
     };
 
     bool8 running = true;

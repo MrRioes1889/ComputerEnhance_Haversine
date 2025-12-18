@@ -232,7 +232,7 @@ bool8 shm_json_parse_text(const char* text, uint32 estimated_node_count, SHM_Jso
     JsonParentStack parent_stack = {0};
     _json_parent_stack_init(16, &parent_stack);
 
-    uint32 node_depth = 0;
+    uint16 node_depth = 0;
     uint32 last_key_string_offset = _add_to_string_buffer(&json_data, "head", 4);
     bool8 parsing_value = true;
     JsonNodeTypeValue parent_type = JsonNodeType_None;
@@ -537,7 +537,7 @@ void shm_json_print_data(const SHM_JsonData* data)
         }
         case JsonNodeType_String:
         {
-            printf_s("{node_id = %u, type = String, depth = %hu, next_id = %u, key = '%s', string_value = %u}\n",
+            printf_s("{node_id = %u, type = String, depth = %hu, next_id = %u, key = '%s', string_value = '%s'}\n",
                  i, node.node_depth, node.next_node_id, key, &data->string_buffer[node.string_value_offset]);
             break;
         }
@@ -549,7 +549,7 @@ void shm_json_print_data(const SHM_JsonData* data)
         }
         case JsonNodeType_Integer:
         {
-            printf_s("{node_id = %u, type = Integer, depth = %hu, next_id = %u, key = '%s', value = %li}\n",
+            printf_s("{node_id = %u, type = Integer, depth = %hu, next_id = %u, key = '%s', value = %lli}\n",
                  i, node.node_depth, node.next_node_id, key, node.int_value);
             break;
         }

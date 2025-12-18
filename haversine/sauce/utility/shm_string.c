@@ -9,7 +9,7 @@
 #endif
 
 #define SHM_STRING_MIN_SIZE 8
-#define SHM_STRING_RESIZE_FACTOR 1.5f
+#define SHM_STRING_RESIZE_FACTOR 1.5
 
 uint32 shm_cstring_copy(char* dst_buf, uint32 dst_buf_size, const char* src_buf)
 {
@@ -109,7 +109,7 @@ void shm_string_reserve(SHM_String* string, uint64 reserve_length)
         return;
 
     while (string->buffer_size < (reserve_length + 1))
-        string->buffer_size *= SHM_STRING_RESIZE_FACTOR;
+        string->buffer_size = (uint64)(SHM_STRING_RESIZE_FACTOR * (float64)string->buffer_size);
     string->buffer = SHM_STRING_REALLOC(string->buffer, string->buffer_size);
 }
 

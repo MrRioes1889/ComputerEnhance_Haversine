@@ -73,7 +73,7 @@ void generate_haversine_test_json(const char* json_filepath, const char* results
         haversine_sum += haversine_res;
     }
 
-    shm_platform_file_append(file, lines_s.buffer, lines_s.length);
+    shm_platform_file_append(file, lines_s.buffer, (uint32)lines_s.length);
     char json_end[] = "\t]\n}";
     shm_platform_file_append(file, json_end, array_count(json_end) - 1);
 
@@ -84,6 +84,6 @@ void generate_haversine_test_json(const char* json_filepath, const char* results
     shm_platform_file_close(&file);
 
     SHM_FileHandle results_file = shm_platform_file_create(results_filepath, true);
-    shm_platform_file_append(results_file, haversine_results, haversine_results_size);
+    shm_platform_file_append(results_file, haversine_results, (uint32)haversine_results_size);
     shm_platform_file_close(&results_file);
 }
