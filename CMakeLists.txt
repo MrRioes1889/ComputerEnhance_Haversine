@@ -22,7 +22,7 @@ if (NOT DEFINED CMAKE_BUILD_TYPE)
             set(CMAKE_BUILD_TYPE Debug)
         endif()
     else()
-        set(CMAKE_C_FLAGS_ODEBUG "/O2 /Zi /DODEBUG /DDEBUG")
+        set(CMAKE_C_FLAGS_ODEBUG "/O2 /Zi /DODEBUG /DDEBUG /Wall /W4")
         set(CMAKE_EXE_LINKER_FLAGS_ODEBUG "/DEBUG /OPT:REF")
         add_compile_options(/Wall /W4)
     endif()
@@ -74,17 +74,9 @@ set_target_properties(
     ARCHIVE_OUTPUT_DIRECTORY "${BIN_DIR}"
     LIBRARY_OUTPUT_DIRECTORY "${BIN_DIR}"
     OUTPUT_NAME "${APP_NAME}"
-)
-
-target_include_directories(
-    ${APP_NAME}
-    PRIVATE
-        ${SOURCE_DIR}
-)
-
-target_link_libraries(
-    ${APP_NAME}
-    PUBLIC winmm 
+    INCLUDE_DIRECTORIES "${SOURCE_DIR}"
+    LINK_DIRECTORIES "${SOURCE_DIR}/asm"
+    LINK_LIBRARIES "winmm"
 )
 
 # Make Visual Studio solution a tad less obnoxious
