@@ -4,21 +4,21 @@
 #include <malloc.h>
 #include <stdio.h>
 
-#pragma comment(lib, "test_write_all_bytes.lib")
-extern void asm_write_all_bytes_mov(uint64 buffer_size, uint8* buffer);
-extern void asm_write_all_bytes_nop(uint64 buffer_size, uint8* buffer);
-extern void asm_write_all_bytes_cmp(uint64 buffer_size, uint8* buffer);
-extern void asm_write_all_bytes_dec(uint64 buffer_size, uint8* buffer);
+#pragma comment(lib, "win64_test_loops.lib")
+extern void asm_mov_all_bytes(uint64 buffer_size, uint8* buffer);
+extern void asm_nop_all_bytes(uint64 buffer_size, uint8* buffer);
+extern void asm_inc_cmp_empty_loop(uint64 buffer_size, uint8* buffer);
+extern void asm_dec_empty_loop(uint64 buffer_size, uint8* buffer);
 
-#define SINGLE_FUNCTION_TEST(test_fun_name, params_type, bytes_variable, fun_call) \
-static void test_fun_name(SHM_RepetitionTester* tester, void* _params)\
-{\
-    params_type* params = (params_type*)_params;\
-    shm_repetition_test_begin_timer(tester);\
-    fun_call;\
-    shm_repetition_test_end_timer(tester);\
-    shm_repetition_test_add_bytes_processed(tester, bytes_variable);\
-}
+extern void asm_read_mov_x1(uint64 buffer_size, uint8* buffer);
+extern void asm_read_mov_x2(uint64 buffer_size, uint8* buffer);
+extern void asm_read_mov_x3(uint64 buffer_size, uint8* buffer);
+extern void asm_read_mov_x4(uint64 buffer_size, uint8* buffer);
+
+extern void asm_wide_read_mov_4x2(uint64 buffer_size, uint8* buffer);
+extern void asm_wide_read_mov_8x2(uint64 buffer_size, uint8* buffer);
+extern void asm_wide_read_mov_16x2(uint64 buffer_size, uint8* buffer);
+extern void asm_wide_read_mov_32x2(uint64 buffer_size, uint8* buffer);
 
 typedef struct 
 {
@@ -106,56 +106,6 @@ static void _write_all_bytes(uint64 buffer_size, uint8* buffer)
     }
 }
 
-static void _test_write_all_bytes_c(SHM_RepetitionTester* tester, void* _params)
-{
-    TestParams* params = (TestParams*)_params;
-    shm_repetition_test_begin_timer(tester);
-    _write_all_bytes(params->preallocated_buffer.size, params->preallocated_buffer.data);
-    shm_repetition_test_end_timer(tester);
-
-    shm_repetition_test_add_bytes_processed(tester, params->preallocated_buffer.size);
-}
-
-static void _test_write_all_bytes_asm_mov(SHM_RepetitionTester* tester, void* _params)
-{
-    TestParams* params = (TestParams*)_params;
-    shm_repetition_test_begin_timer(tester);
-    asm_write_all_bytes_mov(params->preallocated_buffer.size, params->preallocated_buffer.data);
-    shm_repetition_test_end_timer(tester);
-
-    shm_repetition_test_add_bytes_processed(tester, params->preallocated_buffer.size);
-}
-
-static void _test_loop_all_bytes_asm_nop(SHM_RepetitionTester* tester, void* _params)
-{
-    TestParams* params = (TestParams*)_params;
-    shm_repetition_test_begin_timer(tester);
-    asm_write_all_bytes_nop(params->preallocated_buffer.size, params->preallocated_buffer.data);
-    shm_repetition_test_end_timer(tester);
-
-    shm_repetition_test_add_bytes_processed(tester, params->preallocated_buffer.size);
-}
-
-static void _test_loop_all_bytes_asm_cmp(SHM_RepetitionTester* tester, void* _params)
-{
-    TestParams* params = (TestParams*)_params;
-    shm_repetition_test_begin_timer(tester);
-    asm_write_all_bytes_cmp(params->preallocated_buffer.size, params->preallocated_buffer.data);
-    shm_repetition_test_end_timer(tester);
-
-    shm_repetition_test_add_bytes_processed(tester, params->preallocated_buffer.size);
-}
-
-static void _test_loop_all_bytes_asm_dec(SHM_RepetitionTester* tester, void* _params)
-{
-    TestParams* params = (TestParams*)_params;
-    shm_repetition_test_begin_timer(tester);
-    asm_write_all_bytes_dec(params->preallocated_buffer.size, params->preallocated_buffer.data);
-    shm_repetition_test_end_timer(tester);
-
-    shm_repetition_test_add_bytes_processed(tester, params->preallocated_buffer.size);
-}
-
 typedef void(*FP_test_function)(uint64 buffer_size, uint8* buffer);
 typedef struct TestFunction
 {
@@ -170,13 +120,12 @@ void run_all_tests(const char* filename, uint64 time_counter_frequency)
     if (!buffer.data)
         return;
 
-    TestFunction tests[5] =
+    TestFunction tests[4] =
     {
-        {.func = _write_all_bytes, .name = "Write All Bytes - C"},
-        {.func = asm_write_all_bytes_mov, .name = "Write All Bytes - ASM"},
-        {.func = asm_write_all_bytes_nop, .name = "Nop All Bytes - ASM"},
-        {.func = asm_write_all_bytes_cmp, .name = "Cmp All Bytes - ASM",},
-        {.func = asm_write_all_bytes_dec, .name = "Dec All Bytes - ASM",}
+        {.func = asm_wide_read_mov_4x2, .name = "Wide read movs 4 x 2 - ASM"},
+        {.func = asm_wide_read_mov_8x2, .name = "Wide read movs 8 x 2 - ASM"},
+        {.func = asm_wide_read_mov_16x2, .name = "Wide read movs 16 x 2 - ASM"},
+        {.func = asm_wide_read_mov_32x2, .name = "Wide read movs 32 x 2 - ASM"}
     };
     uint32 test_count = array_count(tests);
 
@@ -200,5 +149,3 @@ void run_all_tests(const char* filename, uint64 time_counter_frequency)
         shm_repetition_tester_print_last_test_results(&tester);
     }
 }
-
-
