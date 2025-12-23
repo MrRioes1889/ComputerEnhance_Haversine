@@ -1,5 +1,5 @@
 bin/
 build/
 haversine_pairs*
-sauce/asm/*.obj
-sauce/asm/*.lib
+haversine/sauce/asm/*.obj
+haversine/sauce/asm/*.lib
