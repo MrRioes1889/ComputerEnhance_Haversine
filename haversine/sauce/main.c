@@ -11,7 +11,7 @@ int main(int argc, char** argv)
 	shm_platform_context_init_additional_metrics();
 	shm_platform_console_window_open();
 
-	uint32 rdtsc_freq = shm_platform_get_cpu_timer_frequency(500);
+	uint64 rdtsc_freq = shm_platform_get_cpu_timer_frequency(500);
 	shm_profiler_init(rdtsc_freq);
 
 	const char* json_path = "haversine_pairs.json";
@@ -22,7 +22,7 @@ int main(int argc, char** argv)
 	#elif 0
 	haversine_calculate_average_from_json(json_path, results_path, pair_count);
 	#elif 1
-	run_all_tests(json_path, rdtsc_freq);
+	run_cache_size_tests_non_pow_2(rdtsc_freq);
 	#endif
 
 	shm_profiler_dump();

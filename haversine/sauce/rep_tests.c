@@ -20,6 +20,13 @@ extern void asm_wide_read_mov_8x2(uint64 buffer_size, uint8* buffer);
 extern void asm_wide_read_mov_16x2(uint64 buffer_size, uint8* buffer);
 extern void asm_wide_read_mov_32x2(uint64 buffer_size, uint8* buffer);
 
+// CONSTRAINTS: buffer_size: multiple of 128, slice_size: power of 2 && >= 128
+extern void asm_cache_size_test_128(uint64 buffer_size, uint8* buffer, uint64 slice_size);
+// CONSTRAINTS: buffer_size: multiple of 256, slice_size: power of 2 && >= 256
+extern void asm_cache_size_test_256(uint64 buffer_size, uint8* buffer, uint64 slice_size);
+// CONSTRAINTS: buffer_size: >= 256, slice_size: * 256 <= buffer_size
+extern uint64 asm_cache_size_test_256_non_pow_of_2(uint64 buffer_size, uint8* buffer, uint64 read_block_256_count);
+
 typedef struct 
 {
     uint64 size;
@@ -106,46 +113,93 @@ static void _write_all_bytes(uint64 buffer_size, uint8* buffer)
     }
 }
 
-typedef void(*FP_test_function)(uint64 buffer_size, uint8* buffer);
+typedef uint64(*FP_test_function)(uint64 buffer_size, uint8* buffer, uint64 read_block_count);
 typedef struct TestFunction
 {
     const char* name;
     FP_test_function func;
+    uint64 slice_size;
 }
 TestFunction;
 
-void run_all_tests(const char* filename, uint64 time_counter_frequency)
+void run_cache_size_tests_pow_2(uint64 time_counter_frequency)
 {
-    TestBuffer buffer = _allocate_filebuffer(filename);
+    TestBuffer buffer = {0};
+    buffer.size = GIGABYTE(1);
+    buffer.data = shm_platform_memory_allocate(buffer.size);
     if (!buffer.data)
         return;
 
-    TestFunction tests[4] =
-    {
-        {.func = asm_wide_read_mov_4x2, .name = "Wide read movs 4 x 2 - ASM"},
-        {.func = asm_wide_read_mov_8x2, .name = "Wide read movs 8 x 2 - ASM"},
-        {.func = asm_wide_read_mov_16x2, .name = "Wide read movs 16 x 2 - ASM"},
-        {.func = asm_wide_read_mov_32x2, .name = "Wide read movs 32 x 2 - ASM"}
-    };
-    uint32 test_count = array_count(tests);
+    // NOTE: Preventing page faults
+    uint8* data = buffer.data;
+    for (uint64 i = 0; i < buffer.size; i++)
+        data[i] = (uint8)i;
 
+    char test_title[256];
+    uint64 slice_size = KILOBYTE(1);
     bool8 running = true;
     SHM_RepetitionTester tester = {0};
-    shm_repetition_tester_init(time_counter_frequency, 10.0, &tester);
-    uint32 test_i = test_count - 1;
+    shm_repetition_tester_init(time_counter_frequency, 10.0, false, &tester);
     while (running)
     {
-        test_i = (test_i + 1) % test_count;
-        shm_repetition_tester_begin_test(&tester, tests[test_i].name);
+        sprintf_s(test_title, array_count(test_title), "Cache size test 8x32 movs - Slice size: %llu Bytes", slice_size);
+        shm_repetition_tester_begin_test(&tester, test_title);
 
         while (shm_repetition_tester_next_run(&tester))
         {
             shm_repetition_test_begin_timer(&tester);
-            tests[test_i].func(buffer.size, buffer.data);
+            asm_cache_size_test_256(buffer.size, buffer.data, slice_size);
             shm_repetition_test_end_timer(&tester);
             shm_repetition_test_add_bytes_processed(&tester, buffer.size);
         }
 
         shm_repetition_tester_print_last_test_results(&tester);
+        slice_size = slice_size >= GIGABYTE(1) ? KILOBYTE(1) : slice_size << 1;
+    }
+}
+
+void run_cache_size_tests_non_pow_2(uint64 time_counter_frequency)
+{
+    TestBuffer buffer = {0};
+    buffer.size = GIGABYTE(1);
+    buffer.data = shm_platform_memory_allocate(buffer.size);
+    if (!buffer.data)
+        return;
+
+    // NOTE: Preventing page faults
+    uint8* data = buffer.data;
+    for (uint64 i = 0; i < buffer.size; i++)
+        data[i] = (uint8)i;
+
+    uint64 read_block_counts[] =
+    {
+        2,
+        4,
+        16,
+        3,
+        303
+    };
+    uint32 test_count = array_count(read_block_counts);
+
+    char test_title[256];
+    bool8 running = true;
+    SHM_RepetitionTester tester = {0};
+    shm_repetition_tester_init(time_counter_frequency, 10.0, false, &tester);
+    uint32 test_i = 0;
+    while (running)
+    {
+        sprintf_s(test_title, array_count(test_title), "Cache size test 8x32 movs - Slice size: %llu Bytes", read_block_counts[test_i] * 256);
+        shm_repetition_tester_begin_test(&tester, test_title);
+
+        while (shm_repetition_tester_next_run(&tester))
+        {
+            shm_repetition_test_begin_timer(&tester);
+            uint64 actual_bytes_processed = asm_cache_size_test_256_non_pow_of_2(buffer.size, buffer.data, read_block_counts[test_i]);
+            shm_repetition_test_end_timer(&tester);
+            shm_repetition_test_add_bytes_processed(&tester, actual_bytes_processed);
+        }
+
+        shm_repetition_tester_print_last_test_results(&tester);
+        test_i = (test_i + 1) % test_count;
     }
 }

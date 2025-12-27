@@ -43,3 +43,7 @@ typedef uint16_t Word;
 #define array_count(arr) (sizeof(arr) / sizeof(arr[0]))
 #define MIN(x, y) (y < x ? y : x)
 #define MAX(x, y) (y > x ? y : x)
+
+#define KILOBYTE(x) (1024 * x)
+#define MEGABYTE(x) (KILOBYTE(1024) * x)
+#define GIGABYTE(x) (MEGABYTE(1024) * x)

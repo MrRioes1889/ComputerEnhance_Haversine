@@ -13,6 +13,10 @@ global asm_wide_read_mov_8x2
 global asm_wide_read_mov_16x2
 global asm_wide_read_mov_32x2
 
+global asm_cache_size_test_128
+global asm_cache_size_test_256
+global asm_cache_size_test_256_non_pow_of_2
+
 section .text
 
 asm_mov_all_bytes:
@@ -132,3 +136,92 @@ asm_wide_read_mov_32x2:
     cmp rax, rcx
     jb .loop
     ret
+
+; void asm_cache_size_test_128(uint64 buffer_size : rcx, uint8* buffer : rdx, uint64 slice_size : r8)
+asm_cache_size_test_128:
+    xor rax, rax
+    dec r8 ; generating mask from slice size
+    mov r9, rdx
+    align 64
+.loop:
+    vmovdqu ymm0, [r9]
+    vmovdqu ymm0, [r9 + 32]
+    vmovdqu ymm0, [r9 + 64]
+    vmovdqu ymm0, [r9 + 96]
+
+    add rax, 128
+    and rax, r8
+    mov r9, rdx
+    add r9, rax
+
+    sub rcx, 128
+    jnz .loop
+    ret
+
+; void asm_cache_size_test_256(uint64 buffer_size : rcx, uint8* buffer : rdx, uint64 slice_size : r8)
+asm_cache_size_test_256:
+    xor rax, rax
+    dec r8 ; generating mask from slice size
+    mov r9, rdx
+    align 64
+.loop:
+    vmovdqu ymm0, [r9]
+    vmovdqu ymm0, [r9 + 32]
+    vmovdqu ymm0, [r9 + 64]
+    vmovdqu ymm0, [r9 + 96]
+    vmovdqu ymm0, [r9 + 128]
+    vmovdqu ymm0, [r9 + 160]
+    vmovdqu ymm0, [r9 + 192]
+    vmovdqu ymm0, [r9 + 224]
+
+    add rax, 256
+    and rax, r8
+    mov r9, rdx
+    add r9, rax
+
+    sub rcx, 256
+    jnz .loop
+    ret
+
+; uint64 asm_cache_size_test_256_non_pow_of_2(uint64 buffer_size : rcx, uint8* buffer : rdx, uint64 read_block_256_count : r8)
+asm_cache_size_test_256_non_pow_of_2:
+    mov rax, rcx
+    mov rcx, 256
+    mov r10, rdx
+
+    xor edx, edx
+    div rcx
+    xor edx, edx
+    div r8
+
+    mov rcx, rax
+    mov rdx, r10
+    xor rax, rax
+
+    align 64
+.outer:
+    mov r9, rdx
+    mov r10, r8
+
+.inner:
+    vmovdqu ymm0, [r9]
+    vmovdqu ymm0, [r9 + 32]
+    vmovdqu ymm0, [r9 + 64]
+    vmovdqu ymm0, [r9 + 96]
+    vmovdqu ymm0, [r9 + 128]
+    vmovdqu ymm0, [r9 + 160]
+    vmovdqu ymm0, [r9 + 192]
+    vmovdqu ymm0, [r9 + 224]
+
+    add r9, 256
+    add rax, 256
+    dec r10
+    jnz .inner
+
+    dec rcx
+    jnz .outer
+
+    ret
+
+
+

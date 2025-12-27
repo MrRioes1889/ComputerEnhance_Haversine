@@ -20,16 +20,17 @@ SHM_RepetitionTestResults;
 
 typedef struct SHM_RepetitionTester
 {
-    float64 min_test_runtime_seconds;
+    float64 test_runtime_duration;
     uint64 time_counter_frequency;
     uint64 tsc_last_test_start;
     uint64 run_count;
     uint64 run_results[SHM_RepetitionTestResultTypeCount];
     SHM_RepetitionTestResults test_results;
+    bool8 log_stats_during_test;
 }
 SHM_RepetitionTester;
 
-bool8 shm_repetition_tester_init(uint64 time_counter_frequency, float64 min_test_runtime_seconds, SHM_RepetitionTester* out_tester);
+bool8 shm_repetition_tester_init(uint64 time_counter_frequency, float64 test_runtime_duration, bool8 log_stats_during_test, SHM_RepetitionTester* out_tester);
 
 bool8 shm_repetition_tester_begin_test(SHM_RepetitionTester* tester, const char* test_name);
 bool8 shm_repetition_tester_next_run(SHM_RepetitionTester* tester);
@@ -108,7 +109,7 @@ static void _print_result_line(const char* label, uint64* values, uint64 invalid
 
 static void _print_test_results(SHM_RepetitionTester* tester)
 {
-    SHM_REPETITION_TESTER_LOG("Run count: %llu, Total time elapsed: %.5fs\n", tester->run_count, _tsc_to_seconds(tester->time_counter_frequency, tester->test_results.total[SHM_RepetitionTestResultType_TSC]));
+    SHM_REPETITION_TESTER_LOG("Run count: %llu, Total time elapsed: %.5fs                                  \n", tester->run_count, _tsc_to_seconds(tester->time_counter_frequency, (SHM_REPETITION_TESTER_GET_TSC() - tester->tsc_last_test_start)));
 
     uint64 averages[SHM_RepetitionTestResultTypeCount];
     for (uint32 type_i = 0; type_i < SHM_RepetitionTestResultTypeCount; type_i++)
@@ -120,7 +121,7 @@ static void _print_test_results(SHM_RepetitionTester* tester)
     SHM_REPETITION_TESTER_LOG("\n");
 }
 
-bool8 shm_repetition_tester_init(uint64 time_counter_frequency, float64 min_test_runtime_seconds, SHM_RepetitionTester* out_tester)
+bool8 shm_repetition_tester_init(uint64 time_counter_frequency, float64 test_runtime_duration, bool8 log_stats_during_test, SHM_RepetitionTester* out_tester)
 {
     if (time_counter_frequency == 0)
     {
@@ -128,51 +129,10 @@ bool8 shm_repetition_tester_init(uint64 time_counter_frequency, float64 min_test
         return false;
     }
     out_tester->time_counter_frequency = time_counter_frequency;
-    out_tester->min_test_runtime_seconds = min_test_runtime_seconds;
+    out_tester->test_runtime_duration = test_runtime_duration;
+    out_tester->log_stats_during_test = log_stats_during_test;
     return true;
 }
-
-/*
-bool8 shm_repetition_tester_run_test(SHM_RepetitionTester* tester, SHM_RepetitionTest test)
-{
-    tester->run_count = 0;
-    for (uint32 type_i = 0; type_i < SHM_RepetitionTestResultTypeCount; type_i++)
-    {
-        tester->run_results[type_i] = 0;
-        tester->test_results.min[type_i] = UINT64_MAX;
-        tester->test_results.max[type_i] = 0;
-        tester->test_results.total[type_i] = 0;
-    }
-
-    SHM_REPETITION_TESTER_LOG("Running repetition test '%s':\n", test.name);
-    uint64 total_tsc_start = SHM_REPETITION_TESTER_GET_TSC();
-    float64 total_seconds_elapsed = 0.0;
-    while (total_seconds_elapsed < tester->min_test_runtime_seconds)
-    {
-        test.func((struct SHM_RepetitionTester*)tester, test.params);
-
-        for (uint32 type_i = 0; type_i < SHM_RepetitionTestResultTypeCount; type_i++)
-        {
-            uint64 run_result = tester->run_results[type_i];
-            tester->run_results[type_i] = 0;
-            SHM_RepetitionTestResults* test_result = &tester->test_results;
-            test_result->total[type_i] += run_result;
-            if (run_result < test_result->min[type_i])
-                test_result->min[type_i] = run_result;
-            if (run_result > test_result->max[type_i])
-                test_result->max[type_i] = run_result;
-        }
-
-        tester->run_count++;
-        SHM_REPETITION_TESTER_LOG("Run count: %llu, Total time elapsed: %.5fs, Current minimal time: %.5fms\r",
-            tester->run_count, total_seconds_elapsed, _tsc_to_seconds(tester->time_counter_frequency, tester->test_results.min[SHM_RepetitionTestResultType_TSC]) * 1000.0);
-        total_seconds_elapsed = _tsc_to_seconds(tester->time_counter_frequency, (SHM_REPETITION_TESTER_GET_TSC() - total_tsc_start));
-    }
-
-    _print_test_results(tester, total_seconds_elapsed);
-    return true;
-}
-*/
 
 bool8 shm_repetition_tester_begin_test(SHM_RepetitionTester* tester, const char* test_name)
 {
@@ -187,6 +147,7 @@ bool8 shm_repetition_tester_begin_test(SHM_RepetitionTester* tester, const char*
 
     SHM_REPETITION_TESTER_LOG("Running repetition test '%s':\n", test_name);
     tester->tsc_last_test_start = 0;
+    return true;
 }
 
 bool8 shm_repetition_tester_next_run(SHM_RepetitionTester* tester)
@@ -211,10 +172,13 @@ bool8 shm_repetition_tester_next_run(SHM_RepetitionTester* tester)
 
     tester->run_count++;
     float64 total_seconds_elapsed = _tsc_to_seconds(tester->time_counter_frequency, (SHM_REPETITION_TESTER_GET_TSC() - tester->tsc_last_test_start));
-    SHM_REPETITION_TESTER_LOG("Run count: %llu, Total time elapsed: %.5fs, Current minimal time: %.5fms\r",
-        tester->run_count, total_seconds_elapsed, _tsc_to_seconds(tester->time_counter_frequency, tester->test_results.min[SHM_RepetitionTestResultType_TSC]) * 1000.0);
+    if(tester->log_stats_during_test)
+    {
+        SHM_REPETITION_TESTER_LOG("Run count: %llu, Total time elapsed: %.5fs, Current minimal time: %.5fms\r",
+            tester->run_count, total_seconds_elapsed, _tsc_to_seconds(tester->time_counter_frequency, tester->test_results.min[SHM_RepetitionTestResultType_TSC]) * 1000.0);
+    }
     
-    return total_seconds_elapsed < tester->min_test_runtime_seconds;
+    return total_seconds_elapsed < tester->test_runtime_duration;
 }
 
 void shm_repetition_tester_print_last_test_results(SHM_RepetitionTester* tester)

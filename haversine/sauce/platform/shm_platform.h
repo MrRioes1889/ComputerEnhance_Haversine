@@ -11,6 +11,9 @@ bool8 shm_platform_context_init();
 bool8 shm_platform_context_init_additional_metrics();
 void shm_platform_context_destroy();
 
+void* shm_platform_memory_allocate(uint64 size);
+void shm_platform_memory_free(void* data);
+
 bool8 shm_platform_console_window_open();
 bool8 shm_platform_console_window_close();
 

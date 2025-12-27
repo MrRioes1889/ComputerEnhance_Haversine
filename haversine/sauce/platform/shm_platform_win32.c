@@ -51,6 +51,16 @@ void shm_platform_context_destroy()
 {
 }
 
+void* shm_platform_memory_allocate(uint64 size)
+{
+    return VirtualAlloc(NULL, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+}
+
+void shm_platform_memory_free(void* data)
+{
+    VirtualFree(data, 0, MEM_RELEASE);
+}
+
 uint64 shm_platform_get_os_timer_frequency()
 {
     LARGE_INTEGER qpf;
