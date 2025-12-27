@@ -130,10 +130,14 @@ void run_cache_size_tests_pow_2(uint64 time_counter_frequency)
     if (!buffer.data)
         return;
 
+    uint64 read_size = buffer.size - 64;
+    uint8* read_data = buffer.data;
+    // NOTE: Test unaligned reads
+    uint64 read_alignment_offset = 0;
+    read_data += read_alignment_offset; //
     // NOTE: Preventing page faults
-    uint8* data = buffer.data;
-    for (uint64 i = 0; i < buffer.size; i++)
-        data[i] = (uint8)i;
+    for (uint64 i = 0; i < read_size; i++)
+        read_data[i] = (uint8)i;
 
     char test_title[256];
     uint64 slice_size = KILOBYTE(1);
@@ -142,13 +146,14 @@ void run_cache_size_tests_pow_2(uint64 time_counter_frequency)
     shm_repetition_tester_init(time_counter_frequency, 10.0, false, &tester);
     while (running)
     {
-        sprintf_s(test_title, array_count(test_title), "Cache size test 8x32 movs - Slice size: %llu Bytes", slice_size);
+        sprintf_s(test_title, array_count(test_title), "Cache size test 8x32 movs - Slice size: %llu Bytes - Read alignment offset: %llu Bytes", 
+            slice_size, read_alignment_offset);
         shm_repetition_tester_begin_test(&tester, test_title);
 
         while (shm_repetition_tester_next_run(&tester))
         {
             shm_repetition_test_begin_timer(&tester);
-            asm_cache_size_test_256(buffer.size, buffer.data, slice_size);
+            asm_cache_size_test_256(read_size, read_data, slice_size);
             shm_repetition_test_end_timer(&tester);
             shm_repetition_test_add_bytes_processed(&tester, buffer.size);
         }
@@ -156,20 +161,26 @@ void run_cache_size_tests_pow_2(uint64 time_counter_frequency)
         shm_repetition_tester_print_last_test_results(&tester);
         slice_size = slice_size >= GIGABYTE(1) ? KILOBYTE(1) : slice_size << 1;
     }
+
+    shm_platform_memory_free(buffer.data);
 }
 
 void run_cache_size_tests_non_pow_2(uint64 time_counter_frequency)
 {
     TestBuffer buffer = {0};
-    buffer.size = GIGABYTE(1);
+    buffer.size = GIGABYTE(1) + 64;
     buffer.data = shm_platform_memory_allocate(buffer.size);
     if (!buffer.data)
         return;
 
+    uint64 read_size = buffer.size - 64;
+    uint8* read_data = buffer.data;
+    // NOTE: Test unaligned reads
+    uint64 read_alignment_offset = 0;
+    read_data += read_alignment_offset; //
     // NOTE: Preventing page faults
-    uint8* data = buffer.data;
-    for (uint64 i = 0; i < buffer.size; i++)
-        data[i] = (uint8)i;
+    for (uint64 i = 0; i < read_size; i++)
+        read_data[i] = (uint8)i;
 
     uint64 read_block_counts[] =
     {
@@ -188,13 +199,14 @@ void run_cache_size_tests_non_pow_2(uint64 time_counter_frequency)
     uint32 test_i = 0;
     while (running)
     {
-        sprintf_s(test_title, array_count(test_title), "Cache size test 8x32 movs - Slice size: %llu Bytes", read_block_counts[test_i] * 256);
+        sprintf_s(test_title, array_count(test_title), "Cache size test 8x32 movs - Slice size: %llu Bytes - Read alignment offset: %llu Bytes", 
+            read_block_counts[test_i] * 256, read_alignment_offset);
         shm_repetition_tester_begin_test(&tester, test_title);
 
         while (shm_repetition_tester_next_run(&tester))
         {
             shm_repetition_test_begin_timer(&tester);
-            uint64 actual_bytes_processed = asm_cache_size_test_256_non_pow_of_2(buffer.size, buffer.data, read_block_counts[test_i]);
+            uint64 actual_bytes_processed = asm_cache_size_test_256_non_pow_of_2(read_size, read_data, read_block_counts[test_i]);
             shm_repetition_test_end_timer(&tester);
             shm_repetition_test_add_bytes_processed(&tester, actual_bytes_processed);
         }
@@ -202,4 +214,6 @@ void run_cache_size_tests_non_pow_2(uint64 time_counter_frequency)
         shm_repetition_tester_print_last_test_results(&tester);
         test_i = (test_i + 1) % test_count;
     }
+
+    shm_platform_memory_free(buffer.data);
 }
