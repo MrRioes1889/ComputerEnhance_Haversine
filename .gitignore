@@ -1,5 +1,6 @@
 bin/
 build/
 haversine_pairs*
+haversine_results*
 rep_tests/asm/*.obj
 rep_tests/asm/*.lib
