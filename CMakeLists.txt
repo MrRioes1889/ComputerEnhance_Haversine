@@ -1,9 +1,4 @@
 cmake_minimum_required(VERSION 3.10)
-set(APP_NAME haversine)
-set(PROJ_DIR ${CMAKE_SOURCE_DIR}/${APP_NAME})
-set(SOURCE_DIR ${PROJ_DIR}/sauce)
-
-project(${APP_NAME} C)
 
 set(CMAKE_C_STANDARD 17)
 
@@ -54,32 +49,54 @@ else()
 endif()
 
 # message("Using compiler: ${CMAKE_C_COMPILER_ID}")
-
-file(GLOB_RECURSE SRC_FILES "${SOURCE_DIR}/*.c")
-file(GLOB_RECURSE HEADER_FILES "${SOURCE_DIR}/*.h")
-
 set(BIN_DIR "${CMAKE_SOURCE_DIR}/bin${BUILD_TYPE_SUBDIR}")
 
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BIN_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BIN_DIR}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BIN_DIR}")
 
-add_executable(${APP_NAME} ${SRC_FILES} ${HEADER_FILES})
+set(SOURCE_DIR ${CMAKE_SOURCE_DIR}/sauce)
 
-set_target_properties(
-    ${APP_NAME} PROPERTIES
-    C_STANDARD_REQUIRED YES
-    C_EXTENSIONS ON
-    RUNTIME_OUTPUT_DIRECTORY "${BIN_DIR}"
-    ARCHIVE_OUTPUT_DIRECTORY "${BIN_DIR}"
-    LIBRARY_OUTPUT_DIRECTORY "${BIN_DIR}"
-    OUTPUT_NAME "${APP_NAME}"
-    INCLUDE_DIRECTORIES "${SOURCE_DIR}"
-    LINK_DIRECTORIES "${SOURCE_DIR}/asm"
-    LINK_LIBRARIES "winmm"
-)
+file(GLOB_RECURSE SRC_FILES ${SOURCE_DIR}/*.c)
+file(GLOB_RECURSE HEADER_FILES ${SOURCE_DIR}/*.h)
 
-# Make Visual Studio solution a tad less obnoxious
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${APP_NAME})
-source_group(TREE "${PROJ_DIR}" FILES ${SRC_FILES})
-source_group(TREE "${PROJ_DIR}" FILES ${HEADER_FILES})
+function(build_project PROJ_NAME PROJ_FILES SOURCE_DIR BIN_DIR DEFINES)
+    add_executable(${PROJ_NAME} ${PROJ_FILES})
+    target_include_directories(${PROJ_NAME} PUBLIC ${SOURCE_DIR})
+    target_link_directories(${PROJ_NAME} PUBLIC "${SOURCE_DIR}/asm")
+    target_link_libraries(${PROJ_NAME} PUBLIC "winmm")
+    target_compile_definitions(${PROJ_NAME} PUBLIC ${DEFINES})
+
+    set_target_properties(
+        ${PROJ_NAME} PROPERTIES
+        C_STANDARD_REQUIRED YES
+        C_EXTENSIONS ON
+        RUNTIME_OUTPUT_DIRECTORY "${BIN_DIR}"
+        ARCHIVE_OUTPUT_DIRECTORY "${BIN_DIR}"
+        LIBRARY_OUTPUT_DIRECTORY "${BIN_DIR}"
+        OUTPUT_NAME "${PROJ_NAME}"
+    )
+    
+    message("Project name: " ${PROJ_NAME})
+    message("Source dir: " ${SOURCE_DIR})
+    message("Bin dir: " ${BIN_DIR})
+    message("Defines: " ${DEFINES})
+
+    # Make Visual Studio solution a tad less obnoxious
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJ_NAME})
+    source_group(TREE "${SOURCE_DIR}" FILES ${HAV_CALC_FILES})
+endfunction()
+
+set(PROJ_FILES ${SRC_FILES} ${HEADER_FILES})
+
+set(PROJ_NAME haversine_calc)
+project(${PROJ_NAME} C)
+build_project("${PROJ_NAME}" "${PROJ_FILES}" "${SOURCE_DIR}" "${BIN_DIR}" "HAVERSINE_CALC")
+
+set(PROJ_NAME haversine_gen)
+project(${PROJ_NAME} C)
+build_project("${PROJ_NAME}" "${PROJ_FILES}" "${SOURCE_DIR}" "${BIN_DIR}" "HAVERSINE_GEN")
+
+set(PROJ_NAME haversine_tests)
+project(${PROJ_NAME} C)
+build_project("${PROJ_NAME}" "${PROJ_FILES}" "${SOURCE_DIR}" "${BIN_DIR}" "HAVERSINE_TESTS")

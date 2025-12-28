@@ -1,7 +1,7 @@
-#include "haversine.h"
-#include "platform/shm_platform.h"
-#include "utility/shm_profiler.h"
-#include "utility/shm_json.h"
+#include "haversine_calc.h"
+#include "shm_utils/platform/shm_platform.h"
+#include "shm_utils/shm_profiler.h"
+#include "shm_utils/shm_json.h"
 #include <math.h>
 #include <stdio.h>
 #include <malloc.h>

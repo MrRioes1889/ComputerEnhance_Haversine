@@ -1,5 +1,5 @@
-#include "platform/shm_platform.h"
-#include "platform/shm_intrin.h"
+#include "shm_utils/platform/shm_platform.h"
+#include "shm_utils/platform/shm_intrin.h"
 #include <stdio.h>
 
 #define SHM_UTILS_GENERAL_ENABLE_LOGGING 1
@@ -9,4 +9,4 @@
 #define SHM_UTILS_GENERAL_GET_TSC() shm_intrin_rdtsc()
 
 #define SHM_REPETITION_TESTER_IMPL
-#include <utility/shm_repetition_tester.h>
+#include "shm_utils/shm_repetition_tester.h"

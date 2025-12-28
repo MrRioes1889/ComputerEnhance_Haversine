@@ -1,5 +1,5 @@
 #pragma once
-#include "defines.h"
+#include "../shm_utils_common_defines.h"
 
 #ifdef _WIN32
 #include <intrin.h>

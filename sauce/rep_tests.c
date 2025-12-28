@@ -1,6 +1,6 @@
 #include "rep_tests.h"
-#include "utility/shm_repetition_tester.h"
-#include "platform/shm_platform.h"
+#include "shm_utils/shm_repetition_tester.h"
+#include "shm_utils/platform/shm_platform.h"
 #include <malloc.h>
 #include <stdio.h>
 
@@ -60,7 +60,7 @@ static inline void _free_filebuffer(TestBuffer* buffer)
     buffer->size = 0;
 }
 
-static void __test_fread(SHM_RepetitionTester* tester, const char* filename, void* buffer, uint64 buffer_size)
+static void _read_file_test_fread(SHM_RepetitionTester* tester, const char* filename, uint64 buffer_size, void* buffer)
 {
     FILE* file = fopen(filename, "rb");
     if(!file)
@@ -85,26 +85,6 @@ static void __test_fread(SHM_RepetitionTester* tester, const char* filename, voi
     fclose(file);
 }
 
-static void _test_fread_prealloc(SHM_RepetitionTester* tester, void* _params)
-{
-    TestParams* params = (TestParams*)_params;
-    __test_fread(tester, params->filename, params->preallocated_buffer.data, params->preallocated_buffer.size);
-}
-
-static void _test_fread_alloc(SHM_RepetitionTester* tester, void* _params)
-{
-    TestParams* params = (TestParams*)_params;
-    TestBuffer buffer = _allocate_filebuffer(params->filename);
-    if (!buffer.data)
-    {
-        shm_repetition_test_log_error(tester, "Failed to get filesize for allocation.");
-        return;
-    }
-
-    __test_fread(tester, params->filename, buffer.data, buffer.size);
-    _free_filebuffer(&buffer);
-}
-
 static void _write_all_bytes(uint64 buffer_size, uint8* buffer)
 {
     for (uint64 i = 0; i < buffer_size; i++)
@@ -113,14 +93,51 @@ static void _write_all_bytes(uint64 buffer_size, uint8* buffer)
     }
 }
 
-typedef uint64(*FP_test_function)(uint64 buffer_size, uint8* buffer, uint64 read_block_count);
-typedef struct TestFunction
+typedef uint64(*FP_read_test_function)(SHM_RepetitionTester* tester, const char* filename, uint64 buffer_size, void* buffer);
+typedef struct ReadTest
 {
     const char* name;
-    FP_test_function func;
-    uint64 slice_size;
+    FP_read_test_function func;
 }
-TestFunction;
+ReadTest;
+
+void run_file_read_tests(uint64 time_counter_frequency, const char* filename)
+{
+    TestBuffer buffer = _allocate_filebuffer(filename);
+    if (!buffer.data)
+        return;
+    
+    uint8* read_data = buffer.data;
+    // NOTE: Preventing page faults
+    for (uint64 i = 0; i < buffer.size; i++)
+        read_data[i] = (uint8)i;
+
+    ReadTest tests[] =
+    {
+        {.func = _read_file_test_fread, .name = "fread"}
+    };
+    uint32 test_count = array_count(tests);
+
+    char test_title[256];
+    bool8 running = true;
+    SHM_RepetitionTester tester = {0};
+    shm_repetition_tester_init(time_counter_frequency, 10.0, false, &tester);
+    uint32 test_i = 0;
+    while(running)
+    {
+        sprintf_s(test_title, array_count(test_title), "Read file test - File size: %llu Bytes - Method: %s", 
+            buffer.size, tests[test_i].name);
+        shm_repetition_tester_begin_test(&tester, test_title);
+
+        while (shm_repetition_tester_next_run(&tester))
+        {
+            tests[test_i].func(&tester, filename, buffer.size, buffer.data);
+        }
+
+        shm_repetition_tester_print_last_test_results(&tester);
+        test_i = (test_i + 1) % test_count;
+    }
+}
 
 void run_cache_size_tests_pow_2(uint64 time_counter_frequency)
 {
@@ -132,7 +149,7 @@ void run_cache_size_tests_pow_2(uint64 time_counter_frequency)
 
     uint64 read_size = buffer.size - 64;
     uint8* read_data = buffer.data;
-    // NOTE: Test unaligned reads
+    // NOTE: For testing unaligned reads
     uint64 read_alignment_offset = 0;
     read_data += read_alignment_offset; //
     // NOTE: Preventing page faults
@@ -175,7 +192,7 @@ void run_cache_size_tests_non_pow_2(uint64 time_counter_frequency)
 
     uint64 read_size = buffer.size - 64;
     uint8* read_data = buffer.data;
-    // NOTE: Test unaligned reads
+    // NOTE: For testing unaligned reads
     uint64 read_alignment_offset = 0;
     read_data += read_alignment_offset; //
     // NOTE: Preventing page faults

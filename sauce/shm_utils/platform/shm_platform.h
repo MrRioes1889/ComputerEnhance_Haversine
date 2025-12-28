@@ -1,5 +1,5 @@
 #pragma once
-#include "defines.h"
+#include "../shm_utils_common_defines.h"
 
 typedef struct
 {
@@ -14,6 +14,7 @@ void shm_platform_context_destroy();
 void* shm_platform_memory_allocate(uint64 size);
 void shm_platform_memory_free(void* data);
 
+bool8 shm_platform_is_console_window_attached();
 bool8 shm_platform_console_window_open();
 bool8 shm_platform_console_window_close();
 

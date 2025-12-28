@@ -1,7 +1,7 @@
 #include "haversine_generator.h"
-#include "platform/shm_platform.h"
-#include "utility/shm_string.h"
-#include "haversine.h"
+#include "shm_utils/platform/shm_platform.h"
+#include "shm_utils/shm_string.h"
+#include "haversine_calc.h"
 #include <stdio.h>
 #include <malloc.h>
 

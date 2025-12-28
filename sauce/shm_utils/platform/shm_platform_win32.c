@@ -2,7 +2,7 @@
 
 #include "shm_platform.h"
 #include "shm_intrin.h"
-#include "utility/shm_string.h"
+#include "../shm_string.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
@@ -135,6 +135,12 @@ void shm_platform_sleep_until_key_pressed()
         if (input_record.EventType == KEY_EVENT && input_record.Event.KeyEvent.bKeyDown)
             return;
     }
+}
+
+bool8 shm_platform_is_console_window_attached()
+{
+    HANDLE console = GetConsoleWindow();
+    return console != NULL;
 }
 
 bool8 shm_platform_console_window_open()
