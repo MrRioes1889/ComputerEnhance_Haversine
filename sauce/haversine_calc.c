@@ -40,8 +40,8 @@ bool8 haversine_calculate_average_from_json(const char* json_path, const char* r
 	uint64 filesize = shm_platform_get_filesize(json_path);
 	SHM_TIMER_START_DATA(read_file, "Read File", filesize);
 	char* json_s = malloc(filesize+1);
-	SHM_FileHandle file = shm_platform_file_open(json_path);
-	shm_platform_file_read(file, json_s, (uint32)filesize);
+	SHM_FileHandle file = shm_platform_file_open(json_path, false);
+	shm_platform_file_read(file, json_s, (uint32)filesize, 0);
 	json_s[filesize] = 0;
 	shm_platform_file_close(&file);
 	SHM_TIMER_STOP(read_file);

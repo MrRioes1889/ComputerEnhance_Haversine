@@ -43,7 +43,7 @@ static float64 _generate_random_y()
 
 void generate_haversine_test_json(const char* json_filepath, const char* results_filepath, uint32 coord_pair_count, uint32 seed)
 {
-    SHM_FileHandle file = shm_platform_file_create(json_filepath, true);
+    SHM_FileHandle file = shm_platform_file_create(json_filepath, true, false);
 
     _rand_seed = seed;
     char json_start[] = "{\n\t\"pairs\": [\n";
@@ -83,7 +83,7 @@ void generate_haversine_test_json(const char* json_filepath, const char* results
 
     shm_platform_file_close(&file);
 
-    SHM_FileHandle results_file = shm_platform_file_create(results_filepath, true);
+    SHM_FileHandle results_file = shm_platform_file_create(results_filepath, true, false);
     shm_platform_file_append(results_file, haversine_results, (uint32)haversine_results_size);
     shm_platform_file_close(&results_file);
 }

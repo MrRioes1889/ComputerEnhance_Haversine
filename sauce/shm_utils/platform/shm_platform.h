@@ -4,6 +4,7 @@
 typedef struct
 {
     void* handle;
+    bool8 allows_async_access;
 }
 SHM_FileHandle;
 
@@ -28,10 +29,10 @@ void shm_platform_sleep_ms(uint32 sleep_ms);
 void shm_platform_sleep_until_key_pressed();
 
 uint64 shm_platform_get_filesize(const char* filepath);
-SHM_FileHandle shm_platform_file_create(const char* filepath, bool8 overwrite);
-SHM_FileHandle shm_platform_file_open(const char* filepath);
+SHM_FileHandle shm_platform_file_create(const char* filepath, bool8 overwrite, bool8 allow_async_access);
+SHM_FileHandle shm_platform_file_open(const char* filepath, bool8 allow_async_access);
 void shm_platform_file_close(SHM_FileHandle* file);
-uint32 shm_platform_file_read(SHM_FileHandle file, void* dest_buffer, uint32 dest_buffer_size);
+uint32 shm_platform_file_read(SHM_FileHandle file, void* dest_buffer, uint32 read_size, uint64 read_offset);
 void shm_platform_file_append(SHM_FileHandle file, void* buffer, uint32 buffer_size);
 
 

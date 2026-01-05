@@ -23,7 +23,9 @@ int main(int argc, char** argv)
 	#elif defined(HAVERSINE_CALC)
 	haversine_calculate_average_from_json(json_path, results_path, pair_count);
 	#elif defined(HAVERSINE_TESTS)
+	//run_cache_size_tests_pow_2(rdtsc_freq);
 	run_file_read_tests(rdtsc_freq, json_path);
+	//run_incremental_file_read_tests(rdtsc_freq, json_path);
 	#endif
 
 	shm_profiler_dump();

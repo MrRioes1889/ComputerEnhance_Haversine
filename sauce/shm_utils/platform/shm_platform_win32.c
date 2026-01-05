@@ -190,17 +190,25 @@ uint64 shm_platform_get_filesize(const char* filepath)
     return (uint64)ret.QuadPart;
 }
 
-SHM_FileHandle shm_platform_file_create(const char* filepath, bool8 overwrite)
+SHM_FileHandle shm_platform_file_create(const char* filepath, bool8 overwrite, bool8 allow_async_access)
 {
-    SHM_FileHandle file = {0};
-    file.handle = CreateFileA(filepath, GENERIC_READ | GENERIC_WRITE, 0, 0, overwrite ? CREATE_ALWAYS : CREATE_NEW, 0, 0);
+    SHM_FileHandle file = { .allows_async_access = allow_async_access };
+    DWORD flags = 0;
+    if (allow_async_access)
+        flags |= FILE_FLAG_OVERLAPPED;
+
+    file.handle = CreateFileA(filepath, GENERIC_READ | GENERIC_WRITE, 0, 0, overwrite ? CREATE_ALWAYS : CREATE_NEW, flags, 0);
     return file;
 }
 
-SHM_FileHandle shm_platform_file_open(const char* filepath)
+SHM_FileHandle shm_platform_file_open(const char* filepath, bool8 allow_async_access)
 {
-    SHM_FileHandle file = {0};
-    file.handle = CreateFileA(filepath, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
+    SHM_FileHandle file = { .allows_async_access = allow_async_access };
+    DWORD flags = 0;
+    if (allow_async_access)
+        flags |= FILE_FLAG_OVERLAPPED;
+
+    file.handle = CreateFileA(filepath, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, flags, 0);
     return file;
 }
 
@@ -210,10 +218,13 @@ void shm_platform_file_close(SHM_FileHandle* file)
     file->handle = 0;
 }
 
-uint32 shm_platform_file_read(SHM_FileHandle file, void* dest_buffer, uint32 dest_buffer_size)
+uint32 shm_platform_file_read(SHM_FileHandle file, void* dest_buffer, uint32 read_size, uint64 read_offset)
 {
     DWORD bytes_read = 0;
-    ReadFile(file.handle, dest_buffer, dest_buffer_size, &bytes_read, 0);
+    OVERLAPPED overlapped = {0};
+    overlapped.Offset = read_offset & 0xFFFFFFFF;
+    overlapped.OffsetHigh = read_offset >> 32;
+    ReadFile(file.handle, dest_buffer, read_size, &bytes_read, &overlapped);
     return bytes_read;
 }
 

@@ -44,6 +44,6 @@ typedef uint16_t Word;
 #define MIN(x, y) (y < x ? y : x)
 #define MAX(x, y) (y > x ? y : x)
 
-#define KILOBYTE(x) (1024 * x)
-#define MEGABYTE(x) (KILOBYTE(1024) * x)
-#define GIGABYTE(x) (MEGABYTE(1024) * x)
+#define KIBIBYTE(x) (1024 * x)
+#define MEBIBYTE(x) (KIBIBYTE(1024) * x)
+#define GIBIBYTE(x) (MEBIBYTE(1024) * x)
