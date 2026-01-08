@@ -2,7 +2,8 @@
 #include "shm_utils/shm_profiler.h"
 #include "haversine_calc.h"
 #include "haversine_generator.h"
-#include "rep_tests.h"
+#include "mem_tests.h"
+#include "haversine_tests.h"
 #include <stdio.h>
 
 int main(int argc, char** argv)
@@ -23,9 +24,10 @@ int main(int argc, char** argv)
 	#elif defined(HAVERSINE_CALC)
 	haversine_calculate_average_from_json(json_path, results_path, pair_count);
 	#elif defined(HAVERSINE_TESTS)
-	//run_cache_size_tests_pow_2(rdtsc_freq);
-	run_file_read_tests(rdtsc_freq, json_path);
-	//run_incremental_file_read_tests(rdtsc_freq, json_path);
+	//rep_test_mem_cache_size_pow_2(rdtsc_freq);
+	//rep_test_mem_file_read(rdtsc_freq, json_path);
+	//rep_test_mem_incremental_file_read(rdtsc_freq, json_path);
+	rep_test_haversine_reference(rdtsc_freq, json_path, results_path, pair_count);
 	#endif
 
 	shm_profiler_dump();

@@ -1,4 +1,4 @@
-#include "rep_tests.h"
+#include "mem_tests.h"
 #include "shm_utils/shm_repetition_tester.h"
 #include "shm_utils/platform/shm_platform.h"
 #include <malloc.h>
@@ -38,7 +38,7 @@ typedef struct
 }
 TestBuffer;
 
-void run_cache_size_tests_pow_2(uint64 time_counter_frequency)
+void rep_test_mem_cache_size_pow_2(uint64 time_counter_frequency)
 {
     TestBuffer buffer = {0};
     buffer.size = GIBIBYTE(1);
@@ -92,7 +92,7 @@ void run_cache_size_tests_pow_2(uint64 time_counter_frequency)
     shm_platform_memory_free(buffer.data);
 }
 
-void run_cache_size_tests_non_pow_2(uint64 time_counter_frequency)
+void rep_test_mem_cache_size_non_pow_2(uint64 time_counter_frequency)
 {
     TestBuffer buffer = {0};
     buffer.size = GIBIBYTE(1);
@@ -190,7 +190,8 @@ static void _test_file_read_fread(SHM_RepetitionTester* tester, const char* file
 
 static void _test_file_read_shm_platform(SHM_RepetitionTester* tester, const char* filename, uint64 buffer_size, void* buffer)
 {
-    SHM_FileHandle file = shm_platform_file_open(filename, false);
+    SHM_FileHandle file = {0};
+    shm_platform_file_open(filename, false, &file);
     if(!file.handle)
     {
         shm_repetition_test_log_error(tester, "shm_platform fileread failed");
@@ -259,7 +260,7 @@ typedef struct RawFileReadTest
 }
 RawFileReadTest;
 
-void run_file_read_tests(uint64 time_counter_frequency, const char* filename)
+void rep_test_mem_file_read(uint64 time_counter_frequency, const char* filename)
 {
     TestBuffer file_buffer = _allocate_filebuffer(filename);
     if (!file_buffer.data)
@@ -417,7 +418,7 @@ typedef struct IncrementalFileReadTest
 }
 IncrementalFileReadTest;
 
-void run_incremental_file_read_tests(uint64 time_counter_frequency, const char* filename)
+void rep_test_mem_incremental_file_read(uint64 time_counter_frequency, const char* filename)
 {
     TestBuffer scratch_buffer = _allocate_filebuffer(filename);
     if (!scratch_buffer.data)
